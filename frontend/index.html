@@ -505,6 +505,17 @@
     }
   }
 
+    async function updateRecord(id, payload) {
+      return apiFetch(`/records/${id}`, {
+        method: "PUT", // 백엔드가 PATCH면 "PATCH"로 바꿔줘
+        body: JSON.stringify(payload),
+    });
+  }
+
+    async function deleteRecord(id) {
+      return apiFetch(`/records/${id}`, { method: "DELETE" });
+  }
+        
   el("btnSearch").addEventListener("click", doSearch);
 
   el("btnReset").addEventListener("click", async () => {
