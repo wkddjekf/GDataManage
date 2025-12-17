@@ -507,7 +507,7 @@
 
     async function updateRecord(id, payload) {
       return apiFetch(`/records/${id}`, {
-        method: "PUT", // 백엔드가 PATCH면 "PATCH"로 바꿔줘
+        method: "PATCH", 
         body: JSON.stringify(payload),
     });
   }
