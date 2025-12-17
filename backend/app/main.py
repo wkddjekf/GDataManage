@@ -63,18 +63,25 @@ def delete_record(record_id: str, db=Depends(get_db)):
     db.commit()
     return {"ok": True}
 
-@app.put("/records/{record_id}")
+@app.patch("/records/{record_id}")
 def update_record(record_id: str, payload: RecordUpdate, db=Depends(get_db)):
     record = db.query(PlanRecord).filter(PlanRecord.id == record_id).first()
     if not record:
         raise HTTPException(status_code=404, detail="Record not found")
 
-    record.update_date = payload.update_date
-    record.work = payload.work
-    record.table_name = payload.table_name
-    record.owner = payload.owner
-    record.note = payload.note
-    record.p4_path = payload.p4_path
+    # 부분 수정 대응 (PATCH의 핵심)
+    if payload.update_date is not None:
+        record.update_date = payload.update_date
+    if payload.work is not None:
+        record.work = payload.work
+    if payload.table_name is not None:
+        record.table_name = payload.table_name
+    if payload.owner is not None:
+        record.owner = payload.owner
+    if payload.note is not None:
+        record.note = payload.note
+    if payload.p4_path is not None:
+        record.p4_path = payload.p4_path
 
     db.commit()
     db.refresh(record)

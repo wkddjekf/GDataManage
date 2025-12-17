@@ -27,9 +27,9 @@ class PlanRecordUpdateNote(BaseModel):
     note: str
 
 class RecordUpdate(BaseModel):
-    update_date: str
-    work: str
-    table_name: str
-    owner: str
-    note: str | None = ""
-    p4_path: str
+    update_date: Optional[date] = None
+    work: Optional[str] = None
+    table_name: Optional[str] = None
+    owner: Optional[str] = None
+    note: Optional[str] = None
+    p4_path: Optional[str] = None
