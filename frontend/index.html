@@ -169,6 +169,8 @@
   }
 
   // ---------- API ----------
+  const API_BASE = "https://gdatamanage.onrender.com";
+  
   async function apiFetch(path, options = {}) {
     const res = await fetch(`${API_BASE}${path}`, {
       ...options,
