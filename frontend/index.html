@@ -1,0 +1,504 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>기획 데이터 관리</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root { --sidebar:#0f5b6b; }
+    * { box-sizing: border-box; }
+    .sidebar { background: var(--sidebar); }
+    .card { border: 2px solid #0b3b45; }
+    .input { border: 2px solid #111; padding: 10px 12px; border-radius: 6px; width: 100%; }
+    .btn { border: 2px solid #111; padding: 10px 14px; border-radius: 8px; background: #fff; }
+    .btn-primary { background: #0f5b6b; color: #fff; border-color: #0f5b6b; }
+    .btn-primary:hover { filter: brightness(0.95); }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+    .badge { border: 2px solid #111; padding: 4px 8px; border-radius: 999px; font-size: 12px; }
+    .table { width: 100%; border-collapse: separate; border-spacing: 0; }
+    .table th, .table td { border: 2px solid #111; padding: 10px 10px; vertical-align: top; }
+    .table th { background: #f5f7f8; font-weight: 700; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace; }
+    .nav-item { display:block; padding:12px 12px; border-radius: 12px; }
+    .nav-item:hover { background: rgba(255,255,255,.10); }
+    .nav-active { background: rgba(255,255,255,.18); }
+  </style>
+</head>
+
+<body class="bg-gray-100 min-h-screen">
+  <div class="flex min-h-screen">
+
+    <!-- Sidebar -->
+    <aside class="sidebar text-white w-72 p-6">
+      <div class="text-3xl font-extrabold mb-8">기획데이터 참고</div>
+
+      <nav class="space-y-2 text-xl font-semibold">
+        <button id="navRegister" class="nav-item text-left w-full" type="button">기획 데이터 등록</button>
+        <button id="navView" class="nav-item text-left w-full" type="button">기획 데이터 확인</button>
+      </nav>
+
+      <div class="mt-10 text-sm opacity-80">
+        <div class="font-bold mb-1">현재 저장 방식</div>
+        <div>localStorage (임시)</div>
+        <div class="mt-2">나중에 Neon/API로 교체 가능</div>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="flex-1 p-8">
+      <!-- Header -->
+      <div class="mb-6">
+        <h1 id="pageTitle" class="text-2xl font-extrabold">기획 데이터 등록</h1>
+        <p id="pageDesc" class="text-gray-600 mt-1">데이터 등록 → 저장 → 확인 페이지에서 조회</p>
+      </div>
+
+      <!-- =========================
+           PAGE: REGISTER
+      ========================== -->
+      <section id="pageRegister" class="space-y-6">
+        <section class="card bg-white p-6 rounded-xl shadow-sm">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-xl font-extrabold">기획 데이터 등록</h2>
+            <div class="flex items-center gap-2">
+              <span id="countBadge" class="badge">총 0건</span>
+              <button id="clearBtn" class="btn" type="button" title="로컬 저장 데이터 전체 삭제">전체삭제</button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-6 gap-3">
+            <div class="col-span-1">
+              <label class="font-bold block mb-1">업데이트 일자</label>
+              <input id="fDate" class="input" type="date" />
+            </div>
+
+            <div class="col-span-1">
+              <label class="font-bold block mb-1">관련 작업</label>
+              <input id="fWork" class="input" placeholder="ER-96014 / 작업명" />
+            </div>
+
+            <div class="col-span-1">
+              <label class="font-bold block mb-1">테이블 명</label>
+              <input id="fTable" class="input" placeholder="예: AttendanceReward" />
+            </div>
+
+            <div class="col-span-1">
+              <label class="font-bold block mb-1">담당자</label>
+              <input id="fOwner" class="input" placeholder="예: hyuck" />
+            </div>
+
+            <div class="col-span-2">
+              <label class="font-bold block mb-1">참고사항 기재</label>
+              <input id="fNote" class="input" placeholder="예: 시즌3 보상 수치 변경(기획서 v2)" />
+            </div>
+
+            <div class="col-span-5">
+              <label class="font-bold block mb-1">P4 경로</label>
+              <input id="fP4" class="input mono" placeholder="//ER/Dev/... 또는 Data/xxx.json" />
+            </div>
+
+            <div class="col-span-1 flex items-end justify-end">
+              <button id="addBtn" class="btn btn-primary w-full" type="button">데이터 등록</button>
+            </div>
+          </div>
+
+          <p id="msg" class="text-sm mt-3 text-gray-600"></p>
+        </section>
+
+        <section class="card bg-white p-6 rounded-xl shadow-sm">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-xl font-extrabold">등록 히스토리(최근 20개)</h2>
+            <button id="goViewBtn" class="btn" type="button">확인 페이지로</button>
+          </div>
+
+          <div class="overflow-auto">
+            <table class="table min-w-[1100px] bg-white">
+              <thead>
+                <tr>
+                  <th style="width:140px;">업데이트 일자</th>
+                  <th style="width:220px;">관련 작업</th>
+                  <th style="width:200px;">테이블 명</th>
+                  <th style="width:140px;">담당자</th>
+                  <th>참고사항</th>
+                  <th style="width:220px;">P4 경로</th>
+                  <th style="width:90px;">삭제</th>
+                </tr>
+              </thead>
+              <tbody id="histBody"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+      <!-- =========================
+           PAGE: VIEW
+      ========================== -->
+      <section id="pageView" class="space-y-6 hidden">
+        <section class="card bg-white p-6 rounded-xl shadow-sm">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-xl font-extrabold">기획 데이터 확인</h2>
+            <div class="flex items-center gap-2">
+              <span id="resultBadge" class="badge">조회 0건</span>
+              <button id="editToggle" class="btn" type="button">편집 모드: OFF</button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-6 gap-3">
+            <div class="col-span-1">
+              <label class="font-bold block mb-1">업데이트 일자</label>
+              <input id="qDate" class="input" type="date" />
+            </div>
+
+            <div class="col-span-2">
+              <label class="font-bold block mb-1">관련 작업</label>
+              <input id="qWork" class="input" placeholder="ER-96014 / 키워드 (부분일치)" />
+            </div>
+
+            <div class="col-span-2">
+              <label class="font-bold block mb-1">테이블 선택(기본값 모두 조회)</label>
+              <select id="qTable" class="input">
+                <option value="">(전체)</option>
+              </select>
+            </div>
+
+            <div class="col-span-1 flex items-end justify-end">
+              <button id="searchBtn" class="btn btn-primary w-full" type="button">조회</button>
+            </div>
+          </div>
+
+          <p class="text-sm text-gray-600 mt-3">
+            조회 버튼 클릭 시 아래 정보 노출 (현재는 localStorage 기반 / 추후 DB로 교체)
+          </p>
+        </section>
+
+        <section class="card bg-white p-6 rounded-xl shadow-sm">
+          <div class="overflow-auto">
+            <table class="table min-w-[1200px] bg-white">
+              <thead>
+                <tr>
+                  <th style="width:140px;">업데이트 일자</th>
+                  <th style="width:240px;">관련 작업</th>
+                  <th style="width:200px;">테이블 명</th>
+                  <th style="width:260px;">서밋/P4 경로</th>
+                  <th>참고사항</th>
+                  <th style="width:90px;">저장</th>
+                </tr>
+              </thead>
+              <tbody id="rowsBody"></tbody>
+            </table>
+          </div>
+
+          <div class="flex items-center justify-center gap-2 mt-5" id="pager"></div>
+
+          <div class="flex items-center justify-center mt-6">
+            <span class="btn">편집 모드 ON 시 참고사항 수정/저장 가능</span>
+          </div>
+        </section>
+      </section>
+
+    </main>
+  </div>
+
+<script>
+  // =========================
+  // Storage & utils
+  // =========================
+  const STORAGE_KEY = "plan_data_records_v1";
+  const PAGE_SIZE = 15;
+
+  const $ = (id) => document.getElementById(id);
+
+  function loadAll() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); }
+    catch { return []; }
+  }
+  function saveAll(rows) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(rows));
+  }
+  function uid() {
+    return "r_" + Math.random().toString(36).slice(2) + Date.now().toString(36);
+  }
+  function escapeHtml(s) {
+    return (s ?? "").toString()
+      .replaceAll("&","&amp;").replaceAll("<","&lt;")
+      .replaceAll(">","&gt;").replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+
+  // =========================
+  // Navigation (single web)
+  // =========================
+  const navRegister = $("navRegister");
+  const navView = $("navView");
+  const pageRegister = $("pageRegister");
+  const pageView = $("pageView");
+  const pageTitle = $("pageTitle");
+  const pageDesc = $("pageDesc");
+  const goViewBtn = $("goViewBtn");
+
+  function setActiveNav(which) {
+    // which: "register" | "view"
+    if (which === "register") {
+      pageRegister.classList.remove("hidden");
+      pageView.classList.add("hidden");
+      navRegister.classList.add("nav-active");
+      navView.classList.remove("nav-active");
+      pageTitle.textContent = "기획 데이터 등록";
+      pageDesc.textContent = "데이터 등록 → 저장 → 확인 페이지에서 조회";
+      location.hash = "#register";
+    } else {
+      pageView.classList.remove("hidden");
+      pageRegister.classList.add("hidden");
+      navView.classList.add("nav-active");
+      navRegister.classList.remove("nav-active");
+      pageTitle.textContent = "기획 데이터 확인";
+      pageDesc.textContent = "등록된 데이터를 조회/정렬/참고사항 편집";
+      location.hash = "#view";
+      refreshTableOptions();
+      applyFilter();
+    }
+  }
+
+  navRegister.addEventListener("click", () => setActiveNav("register"));
+  navView.addEventListener("click", () => setActiveNav("view"));
+  goViewBtn.addEventListener("click", () => setActiveNav("view"));
+
+  // =========================
+  // REGISTER page logic
+  // =========================
+  const fDate = $("fDate");
+  const fWork = $("fWork");
+  const fTable = $("fTable");
+  const fOwner = $("fOwner");
+  const fNote = $("fNote");
+  const fP4   = $("fP4");
+  const addBtn = $("addBtn");
+  const clearBtn = $("clearBtn");
+  const msg = $("msg");
+  const histBody = $("histBody");
+  const countBadge = $("countBadge");
+
+  fDate.valueAsDate = new Date();
+
+  function setMsg(text, isError=false) {
+    msg.textContent = text;
+    msg.className = "text-sm mt-3 " + (isError ? "text-red-600" : "text-gray-600");
+  }
+
+  function validateRegister() {
+    if (!fDate.value) return "업데이트 일자를 선택해줘.";
+    if (!fWork.value.trim()) return "관련 작업을 입력해줘.";
+    if (!fTable.value.trim()) return "테이블 명을 입력해줘.";
+    if (!fOwner.value.trim()) return "담당자를 입력해줘.";
+    if (!fP4.value.trim()) return "P4 경로를 입력해줘.";
+    return "";
+  }
+
+  function renderHistory() {
+    const rows = loadAll();
+    countBadge.textContent = `총 ${rows.length}건`;
+
+    const recent = [...rows].sort((a,b)=> (b.created_at||0) - (a.created_at||0)).slice(0, 20);
+    histBody.innerHTML = recent.map(r => `
+      <tr>
+        <td>${escapeHtml(r.update_date)}</td>
+        <td>${escapeHtml(r.work)}</td>
+        <td>${escapeHtml(r.table_name)}</td>
+        <td>${escapeHtml(r.owner)}</td>
+        <td>${escapeHtml(r.note || "")}</td>
+        <td class="mono">${escapeHtml(r.p4_path)}</td>
+        <td><button class="btn" data-del="${r.id}" type="button">삭제</button></td>
+      </tr>
+    `).join("") || `
+      <tr><td colspan="7" class="text-center text-gray-500">등록된 데이터가 아직 없어.</td></tr>
+    `;
+
+    histBody.querySelectorAll("[data-del]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const id = btn.getAttribute("data-del");
+        const all = loadAll();
+        saveAll(all.filter(x => x.id !== id));
+        renderHistory();
+        refreshTableOptions();
+        setMsg("삭제 완료.");
+      });
+    });
+  }
+
+  addBtn.addEventListener("click", () => {
+    const err = validateRegister();
+    if (err) return setMsg(err, true);
+
+    const all = loadAll();
+    all.push({
+      id: uid(),
+      update_date: fDate.value,
+      work: fWork.value.trim(),
+      table_name: fTable.value.trim(),
+      owner: fOwner.value.trim(),
+      note: fNote.value.trim(),
+      p4_path: fP4.value.trim(),
+      created_at: Date.now()
+    });
+    saveAll(all);
+
+    // 빠른 입력을 위해 일부만 초기화
+    fTable.value = "";
+    fNote.value = "";
+    fP4.value = "";
+
+    setMsg("등록 완료! (확인 탭에서 조회 가능)");
+    renderHistory();
+    refreshTableOptions();
+  });
+
+  clearBtn.addEventListener("click", () => {
+    if (!confirm("로컬에 저장된 모든 데이터를 삭제할까?")) return;
+    saveAll([]);
+    renderHistory();
+    refreshTableOptions();
+    setMsg("전체 삭제 완료.");
+  });
+
+  // =========================
+  // VIEW page logic
+  // =========================
+  const qDate = $("qDate");
+  const qWork = $("qWork");
+  const qTable = $("qTable");
+  const searchBtn = $("searchBtn");
+  const editToggle = $("editToggle");
+  const rowsBody = $("rowsBody");
+  const pager = $("pager");
+  const resultBadge = $("resultBadge");
+
+  let editMode = false;
+  let currentPage = 1;
+  let currentFiltered = [];
+
+  function refreshTableOptions() {
+    const all = loadAll();
+    const uniq = [...new Set(all.map(r => r.table_name).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+    const keep = qTable.value;
+    qTable.innerHTML = `<option value="">(전체)</option>` + uniq.map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join("");
+    qTable.value = keep || "";
+  }
+
+  function applyFilter() {
+    const all = loadAll();
+
+    const date = (qDate.value || "").trim();
+    const work = (qWork.value || "").trim().toLowerCase();
+    const table = (qTable.value || "").trim();
+
+    let rows = all;
+    if (date) rows = rows.filter(r => r.update_date === date);
+    if (work) rows = rows.filter(r => (r.work || "").toLowerCase().includes(work));
+    if (table) rows = rows.filter(r => r.table_name === table);
+
+    rows = [...rows].sort((a,b) => (b.created_at||0) - (a.created_at||0));
+    currentFiltered = rows;
+    currentPage = 1;
+
+    resultBadge.textContent = `조회 ${rows.length}건`;
+    renderView();
+  }
+
+  function renderView() {
+    const total = currentFiltered.length;
+    const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
+    currentPage = Math.min(currentPage, pageCount);
+
+    const start = (currentPage - 1) * PAGE_SIZE;
+    const pageRows = currentFiltered.slice(start, start + PAGE_SIZE);
+
+    rowsBody.innerHTML = pageRows.map(r => {
+      const noteCell = editMode
+        ? `<textarea class="input" data-note="${r.id}" rows="2" placeholder="참고사항">${escapeHtml(r.note || "")}</textarea>`
+        : `<div>${escapeHtml(r.note || "")}</div>`;
+
+      return `
+        <tr>
+          <td>${escapeHtml(r.update_date)}</td>
+          <td>${escapeHtml(r.work)}</td>
+          <td>${escapeHtml(r.table_name)}</td>
+          <td class="mono">${escapeHtml(r.p4_path)}</td>
+          <td>${noteCell}</td>
+          <td>
+            <button class="btn ${editMode ? 'btn-primary' : ''}" data-save="${r.id}" type="button" ${editMode ? '' : 'disabled'}>
+              저장
+            </button>
+          </td>
+        </tr>
+      `;
+    }).join("") || `<tr><td colspan="6" class="text-center text-gray-500">조회 결과가 없어.</td></tr>`;
+
+    rowsBody.querySelectorAll("[data-save]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const id = btn.getAttribute("data-save");
+        const ta = rowsBody.querySelector(`[data-note="${CSS.escape(id)}"]`);
+        const newNote = ta ? ta.value : "";
+
+        const all = loadAll();
+        const idx = all.findIndex(x => x.id === id);
+        if (idx >= 0) {
+          all[idx].note = newNote;
+          all[idx].updated_at = Date.now();
+          saveAll(all);
+          applyFilter();
+          alert("참고사항 저장 완료!");
+        }
+      });
+    });
+
+    renderPager(pageCount);
+  }
+
+  function renderPager(pageCount) {
+    pager.innerHTML = "";
+
+    const makeBtn = (label, page, disabled=false, active=false) => {
+      const b = document.createElement("button");
+      b.className = "btn" + (active ? " btn-primary" : "");
+      b.textContent = label;
+      b.disabled = disabled;
+      b.addEventListener("click", () => { currentPage = page; renderView(); });
+      return b;
+    };
+
+    pager.appendChild(makeBtn("◀", Math.max(1, currentPage-1), currentPage===1));
+
+    const windowSize = 7;
+    let s = Math.max(1, currentPage - Math.floor(windowSize/2));
+    let e = Math.min(pageCount, s + windowSize - 1);
+    s = Math.max(1, e - windowSize + 1);
+
+    for (let p = s; p <= e; p++) pager.appendChild(makeBtn(String(p), p, false, p === currentPage));
+
+    pager.appendChild(makeBtn("▶", Math.min(pageCount, currentPage+1), currentPage===pageCount));
+  }
+
+  editToggle.addEventListener("click", () => {
+    editMode = !editMode;
+    editToggle.textContent = `편집 모드: ${editMode ? "ON" : "OFF"}`;
+    if (editMode) editToggle.classList.add("btn-primary");
+    else editToggle.classList.remove("btn-primary");
+    renderView();
+  });
+
+  searchBtn.addEventListener("click", () => applyFilter());
+
+  // =========================
+  // init
+  // =========================
+  renderHistory();
+  refreshTableOptions();
+  setMsg("필수: 업데이트 일자 / 관련 작업 / 테이블 명 / 담당자 / P4 경로");
+
+  // hash routing
+  const h = (location.hash || "").toLowerCase();
+  if (h.includes("view")) setActiveNav("view");
+  else setActiveNav("register");
+</script>
+</body>
+</html>
