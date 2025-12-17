@@ -25,3 +25,11 @@ class PlanRecordOut(BaseModel):
 
 class PlanRecordUpdateNote(BaseModel):
     note: str
+
+class RecordUpdate(BaseModel):
+    update_date: str
+    work: str
+    table_name: str
+    owner: str
+    note: str | None = ""
+    p4_path: str
