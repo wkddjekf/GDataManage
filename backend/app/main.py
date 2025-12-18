@@ -11,6 +11,7 @@ from .schemas import (
     PlanRecordCreate,
     PlanRecordOut,
     PlanRecordUpdateNote,
+    PlanRecordUpdate,   # 추가
 )
 
 app = FastAPI(
@@ -64,7 +65,7 @@ def delete_record(record_id: str, db=Depends(get_db)):
     return {"ok": True}
 
 @app.patch("/records/{record_id}")
-def update_record(record_id: str, payload: RecordUpdate, db=Depends(get_db)):
+def update_record(record_id: str, payload: PlanRecordUpdate, db=Depends(get_db)):
     record = db.query(PlanRecord).filter(PlanRecord.id == record_id).first()
     if not record:
         raise HTTPException(status_code=404, detail="Record not found")

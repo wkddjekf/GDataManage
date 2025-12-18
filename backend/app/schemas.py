@@ -23,8 +23,13 @@ class PlanRecordOut(BaseModel):
     class Config:
         from_attributes = True
 
-class PlanRecordUpdateNote(BaseModel):
-    note: str
+class PlanRecordUpdate(BaseModel):
+    update_date: date
+    work: str
+    table_name: str
+    owner: str
+    note: str = ""
+    p4_path: str
 
 class RecordUpdate(BaseModel):
     update_date: Optional[date] = None
