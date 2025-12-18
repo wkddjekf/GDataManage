@@ -10,8 +10,8 @@ from .models import PlanRecord
 from .schemas import (
     PlanRecordCreate,
     PlanRecordOut,
-    PlanRecordUpdateNote,
-    PlanRecordUpdate,   # 추가
+    PlanRecordUpdate,
+    PlanRecordUpdateNote,  
 )
 
 app = FastAPI(
@@ -116,7 +116,7 @@ def list_table_names(db: Session = Depends(get_db)):
 
 @app.patch("/records/{record_id}/note", response_model=PlanRecordOut)
 def update_note(
-    record_id: UUID,
+    record_id: str,
     payload: PlanRecordUpdateNote,
     db: Session = Depends(get_db),
 ):

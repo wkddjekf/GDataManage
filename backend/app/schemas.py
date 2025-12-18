@@ -31,6 +31,9 @@ class PlanRecordUpdate(BaseModel):
     note: str = ""
     p4_path: str
 
+class PlanRecordUpdateNote(BaseModel):
+    note: Optional[str] = None
+
 class RecordUpdate(BaseModel):
     update_date: Optional[date] = None
     work: Optional[str] = None
